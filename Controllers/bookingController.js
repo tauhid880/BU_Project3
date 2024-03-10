@@ -112,12 +112,33 @@ export const deleteBooking = async (req, res) => {
   }
 };
 
+// export const getIndividualPendingdBookings = async (req, res) => {
+//   try {
+//     const { email } = req.query; // Assuming you're passing email as a query parameter
+//     const pendingCount = await Booking.aggregate([
+//       {
+//         $match: { isApproved: "pending", email: email }, // Match documents where isApproved is "pending" and email matches
+//       },
+//       {
+//         $group: {
+//           _id: "$isApproved", // Group by the isApproved field
+//           count: { $sum: 1 }, // Count the number of documents in each group
+//         },
+//       },
+//     ]);
+//     res.json({ success: true, pendingCount });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 export const getIndividualPendingdBookings = async (req, res) => {
   try {
-    const { email } = req.query; // Assuming you're passing email as a query parameter
+    const email = req.params.email; // Access the email parameter directly from req.params
+
     const pendingCount = await Booking.aggregate([
       {
-        $match: { isApproved: "pending", email: email }, // Match documents where isApproved is "pending" and email matches
+        $match: { isApproved: "pending", userEmail: email }, // Match documents where isApproved is "pending" and email matches
       },
       {
         $group: {
@@ -151,6 +172,32 @@ export const updateIndividualTeacherBookings = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to Approved",
+    });
+  }
+};
+
+export const getPendingdBookings = async (req, res) => {
+  try {
+    const email = req.query; // Extracting the email from the query parameters
+    let bookings;
+
+    if (email) {
+      // If email is provided in the query, filter by both email and isApproved: "pending"
+      bookings = await Booking.find({ email: email, isApproved: "pending" });
+    } else {
+      // If no email is provided, fetch all pending bookings
+      bookings = await Booking.find({ isApproved: "pending" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Booking data found",
+      data: bookings,
+    });
+  } catch (error) {
+    res.status(404).json({
+      success: false,
+      message: "No booking data found",
     });
   }
 };

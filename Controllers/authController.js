@@ -13,28 +13,96 @@ const generateToken = (user) => {
   );
 };
 
+// export const register = async (req, res) => {
+//   const { email, password, name, id, photo, role } = req.body;
+//   console.log(id);
+//   try {
+//     let user = null;
+//     if (role == "student" || role == "admin") {
+//       user = await User.findOne({ email });
+//     } else if (role == "teacher") {
+//       user = await Teacher.findOne({ email });
+//     }
+
+//     // Check if user exist
+
+//     if (user) {
+//       return res.status(400).json({ message: "User already exist" });
+//     }
+
+//     //  Hash password
+
+//     const salt = await bcrypt.genSalt(10);
+//     const hashPassword = await bcrypt.hash(password, salt);
+
+//     if (role == "student") {
+//       user = new User({
+//         name,
+//         role,
+//         email,
+//         password: hashPassword,
+//         id,
+//         photo,
+//       });
+//     }
+
+//     if (role == "teacher") {
+//       user = new Teacher({
+//         name,
+//         role,
+//         email,
+//         password: hashPassword,
+//         id,
+//         photo,
+//       });
+//     }
+
+//     await user.save();
+//     res
+//       .status(200)
+//       .json({ success: true, message: "User successfully created" });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Internal server error" });
+//   }
+// };
+
 export const register = async (req, res) => {
   const { email, password, name, id, photo, role } = req.body;
+
   try {
     let user = null;
-    if (role == "student" || role == "admin") {
+
+    // Check if the email already exists in the database
+    if (role === "student" || role === "admin") {
       user = await User.findOne({ email });
-    } else if (role == "teacher") {
+    } else if (role === "teacher") {
       user = await Teacher.findOne({ email });
     }
 
-    // Check if user exist
-
+    // Check if the user exists
     if (user) {
-      return res.status(400).json({ message: "User already exist" });
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    //  Hash password
+    // Check if the ID already exists
+    if (role === "student") {
+      const existingUserWithId = await User.findOne({ id });
+      if (existingUserWithId) {
+        return res.status(400).json({ message: "ID already exists" });
+      }
+    } else if (role === "teacher") {
+      const existingTeacherWithId = await Teacher.findOne({ id });
+      if (existingTeacherWithId) {
+        return res.status(400).json({ message: "ID already exists" });
+      }
+    }
 
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
 
-    if (role == "student") {
+    // Create new user based on role
+    if (role === "student") {
       user = new User({
         name,
         role,
@@ -43,9 +111,7 @@ export const register = async (req, res) => {
         id,
         photo,
       });
-    }
-
-    if (role == "teacher") {
+    } else if (role === "teacher") {
       user = new Teacher({
         name,
         role,
@@ -56,6 +122,7 @@ export const register = async (req, res) => {
       });
     }
 
+    // Save user to the database
     await user.save();
     res
       .status(200)
